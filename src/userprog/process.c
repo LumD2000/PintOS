@@ -18,6 +18,7 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+#define ARR_SIZE 80
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
@@ -25,12 +26,31 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
    thread id, or TID_ERROR if the thread cannot be created. */
-tid_t
+tid_t 
+//edit this function to parse arguments instead of copying input to file name
 process_execute (const char *file_name) 
 {
   char *fn_copy;
   tid_t tid;
+  char *buf_args[ARR_SIZE];
+  char *wbuf = file_name;
+  char **args;
+  args[0] = file_name;
+  buf_args[0] = file_name;
 
+  for(char **cp = buf_args; (*cp=strsep(&wbuf, " \n\t"));) { 
+    if((**cp == '\0') && (++cp >= &buf_args[ARR_SIZE])) {
+      break;
+    }
+  }
+  
+  size_t j=0;
+  for (size_t i = 0; buf_args[i] != NULL; i++) {
+    if(strlen(buf_args[i])>0) 
+      args[j++]=buf_args[i];
+  }
+
+  args[j] = NULL;
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
