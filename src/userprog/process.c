@@ -32,25 +32,14 @@ process_execute (const char *file_name)
 {
   char *fn_copy;
   tid_t tid;
-  char *buf_args[ARR_SIZE];
-  char *wbuf = file_name;
-  char **args;
-  args[0] = file_name;
-  buf_args[0] = file_name;
-
-  for(char **cp = buf_args; (*cp=strsep(&wbuf, " \n\t"));) { 
-    if((**cp == '\0') && (++cp >= &buf_args[ARR_SIZE])) {
-      break;
-    }
+  printf("debug: file name is %s\n", file_name);
+  //adding string parsing here
+  char * token; 
+  char * save_ptr;
+  for (token = strtok_r (file_name, " \n\t ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
+    printf("hello %s\n", token);
   }
-  
-  size_t j=0;
-  for (size_t i = 0; buf_args[i] != NULL; i++) {
-    if(strlen(buf_args[i])>0) 
-      args[j++]=buf_args[i];
-  }
-
-  args[j] = NULL;
+  //end string parsing here
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
