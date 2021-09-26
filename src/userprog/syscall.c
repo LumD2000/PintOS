@@ -68,6 +68,26 @@ static int get_arg(const uint8_t *uaddr, int *num){
   }
 }
 
+static int get_arg_string(const uint8_t *uaddr, char **str){
+	
+	uint8_t *uaddrstring;
+	int byte;
+	
+	//get the string value
+	if (!get_arg(uaddr, str)) return 0;
+	
+	uaddrstring = (uint8_t*)str;
+	
+	//checks if string is properly terminated
+	for (byte = is_valid_user(uaddrstring); byte != -1; byte = is_valid_user(uaddrstring++)) {
+		
+		if (byte == 0) return 1;
+		
+	}
+	
+	return 0;
+}
+
 static void
 syscall_handler(struct intr_frame *f UNUSED) 
 {
@@ -79,4 +99,15 @@ syscall_handler(struct intr_frame *f UNUSED)
     f->eax = syscalls[num]((uint8_t *) f->esp + sizeof(int));
   else
     f->eax = -1;
+}
+
+static int close(const uint8_t *uaddr) {
+	
+	int fd; 
+	if (!get_arg(uaddr, &fd)) thread_exit();
+	
+	fd_close(fd);
+	
+	return 0;
+	
 }
