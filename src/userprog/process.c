@@ -32,23 +32,30 @@ process_execute (const char *file_name)
 {
   char *fn_copy;
   tid_t tid;
-  printf("debug: file name is %s\n", file_name);
+  printf("debug: whole input is  %s\n", file_name);
+
   //adding string parsing here
   char * token; 
   char * save_ptr;
+  char ** args;
+  size_t j = 0;
+  
   for (token = strtok_r (file_name, " \n\t ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
     printf("hello %s\n", token);
+   // args[j++] = "token"; For some reason this does not work
   }
+  
   //end string parsing here
+
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
-
+  printf("debug: fn_copy is %s\n", fn_copy); 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, args);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   return tid;
