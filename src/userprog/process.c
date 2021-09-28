@@ -47,9 +47,8 @@ process_execute (const char *file_name)
   
   for (token = strtok_r (file_name, " \n\t ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
     printf("hello %s\n", token);
-    string = "test";
   }
-  
+  thread_params.file_name = token;
   //end string parsing here
 
   /* Make a copy of FILE_NAME.

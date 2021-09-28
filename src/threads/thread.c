@@ -173,6 +173,8 @@ thread_create (const char *name, int priority,
   tid_t tid;
   enum intr_level old_level;
 
+  struct thread_data *name_args = (struct thread_data *) aux;
+
   ASSERT (function != NULL);
 
   /* Allocate thread. */
