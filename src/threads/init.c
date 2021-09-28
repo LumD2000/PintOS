@@ -27,7 +27,7 @@
 #include "userprog/exception.h"
 #include "userprog/gdt.h"
 #include "userprog/syscall.h"
-#include "userprog/syscall.c"
+//  #include "userprog/syscall.c"
 #include "userprog/tss.h"
 #else
 #include "tests/threads/tests.h"

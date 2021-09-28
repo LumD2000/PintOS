@@ -42,11 +42,12 @@ process_execute (const char *file_name)
   struct thread_args thread_params; 
   char * token; 
   char * save_ptr;
+  char * string;
   size_t j = 0;
   
   for (token = strtok_r (file_name, " \n\t ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
     printf("hello %s\n", token);
-    thread_params.args[j++] = token;
+    string = "test";
   }
   
   //end string parsing here
