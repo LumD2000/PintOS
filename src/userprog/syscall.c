@@ -4,6 +4,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "lib/kernel/list.h"
 
 static void syscall_handler(struct intr_frame *);
 
@@ -125,7 +126,20 @@ of 0 indicates success and non-zero values indicate errors.
 */
 
 static int sys_exit(const uint8_t *arg_base){
-	return -1;
+	struct list_elem *elem;
+  struct thread *current = thread_current();
+
+  for (elem = list_begin (&current->parent->cp); elem != list_end (&current->parent->cp); elem = list_next (elem)) {
+    struct child_status *child = list_entry(elem, struct child_status, element);
+    if(child->child_tid == current->child_tid) {
+      child->used = true;
+      child->exit_status = arg_base;
+    }
+  }
+
+  current->exit_status = arg_base;
+  printf("%s: exit(%d)\n", current->name, arg_base, child);
+  thread_exit();
 }
 
 /*
