@@ -22,9 +22,9 @@
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
-struct thread_args {
-  char *file_name;
-  char **args;
+struct thread_params {
+  char *program_name;
+  char *args;
 };
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -39,16 +39,10 @@ process_execute (const char *file_name)
   printf("debug: whole input is  %s\n", file_name);
 
   //adding string parsing here 
-  struct thread_args thread_params; 
-  char * token; 
-  char * save_ptr;
-  char * string;
-  size_t j = 0;
+  struct thread_params params;
   
-  for (token = strtok_r (file_name, " \n\t ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
-    printf("hello %s\n", token);
-  }
-  thread_params.file_name = token;
+  params.program_name = strtok_r(file_name, " ", &params.args);
+  printf("debug: name is %s\n", params.program_name);
   //end string parsing here
 
   /* Make a copy of FILE_NAME.
@@ -59,7 +53,7 @@ process_execute (const char *file_name)
   strlcpy (fn_copy, file_name, PGSIZE);
   printf("debug: fn_copy is %s\n", fn_copy); 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, (void*) &thread_params);
+  tid = thread_create (params.program_name, PRI_DEFAULT, start_process, &params.args);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   return tid;
