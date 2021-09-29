@@ -87,6 +87,9 @@ static int get_arg_string(const uint8_t *uaddr, char **str){
 	
 	return 0;
 }
+/*The 80x86 convention for function return values is to place them 
+in the EAX register. System calls that return a value can do so by 
+modifying the eax member of struct intr_frame.*/
 
 static void
 syscall_handler(struct intr_frame *f) 
@@ -101,13 +104,50 @@ syscall_handler(struct intr_frame *f)
     f->eax = -1;
 }
 
-static int close(const uint8_t *uaddr) {
+static int sys_close(const uint8_t *uaddr) {
 	
-	int fd; 
+	/*int fd; 
 	if (!get_arg(uaddr, &fd)) thread_exit();
 	
-	fd_close(fd);
+	fclose(fd);*/
 	
 	return 0;
 	
+}
+
+static int sys_halt(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_exit(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_exec(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_wait(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_create(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_remove(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_open(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_filesize(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_read(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_write(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_seek(const uint8_t *arg_base){
+	return -1;
+}
+static int sys_tell(const uint8_t *arg_base){
+	return -1;
 }

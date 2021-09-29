@@ -18,48 +18,52 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
-#define ARR_SIZE 80
+#define MAX_ARGS 256
+
+//need this for passing name and args at the same time
+struct arguments
+{
+  char * program_name;
+  char * program_args;
+};
+
 static thread_func start_process NO_RETURN;
-static bool load (const char *cmdline, void (**eip) (void), void **esp);
+static bool load (const char *program_name, const char *program_args, void (**eip) (void), void **esp);
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
    thread id, or TID_ERROR if the thread cannot be created. */
-tid_t 
-//edit this function to parse arguments instead of copying input to file name
+tid_t
 process_execute (const char *file_name) 
 {
   char *fn_copy;
   tid_t tid;
-  printf("debug: file name is %s\n", file_name);
-  //adding string parsing here
-  char * token; 
-  char * save_ptr;
-  for (token = strtok_r (file_name, " \n\t ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
-    printf("hello %s\n", token);
-  }
-  //end string parsing here
+  struct arguments args;
+  int i;
+
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
+  //getting the program name and args
+  args.program_name = strtok_r(file_name, " ", &args.program_args);
 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (args.program_name, PRI_DEFAULT, start_process, &args);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   return tid;
 }
 
 /* A thread function that loads a user process and starts it
-   running. */
+   running. Changed the char* to a struct to use the struct that was passed*/
 static void
 start_process (void *file_name_)
 {
-  char *file_name = file_name_;
+  struct arguments * args = file_name_;
   struct intr_frame if_;
   bool success;
 
@@ -68,10 +72,10 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp);
+  success = load(args->program_name, args->program_args, &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
-  palloc_free_page (file_name);
+  palloc_free_page (args->program_name);
   if (!success) 
     thread_exit ();
 
@@ -213,9 +217,10 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
 /* Loads an ELF executable from FILE_NAME into the current thread.
    Stores the executable's entry point into *EIP
    and its initial stack pointer into *ESP.
-   Returns true if successful, false otherwise. */
+   Returns true if successful, false otherwise. 
+   Added another char pointer to take args*/
 bool
-load (const char *file_name, void (**eip) (void), void **esp) 
+load (const char *program_name, const char * program_args, void (**eip) (void), void **esp) 
 {
   struct thread *t = thread_current ();
   struct Elf32_Ehdr ehdr;
@@ -231,12 +236,14 @@ load (const char *file_name, void (**eip) (void), void **esp)
   process_activate ();
 
   /* Open executable file. */
-  file = filesys_open (file_name);
+  file = filesys_open (program_name);
   if (file == NULL) 
     {
-      printf ("load: %s: open failed\n", file_name);
+      printf ("load: %s: open failed\n", program_name);
       goto done; 
     }
+	//deny writing to the file while open
+  file_deny_write(file);
 
   /* Read and verify executable header. */
   if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -247,7 +254,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
       || ehdr.e_phnum > 1024) 
     {
-      printf ("load: %s: error loading executable\n", file_name);
+      printf ("load: %s: error loading executable\n", program_name);
       goto done; 
     }
 
@@ -310,7 +317,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
         }
     }
 
-  /* Set up stack. */
+  /* Set up stack with name and args. */
   if (!setup_stack (esp))
     goto done;
 
@@ -446,7 +453,7 @@ setup_stack (void **esp)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
-        *esp = PHYS_BASE - 12;
+        *esp = PHYS_BASE;
       else
         palloc_free_page (kpage);
     }
