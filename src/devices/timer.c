@@ -86,14 +86,20 @@ timer_elapsed (int64_t then)
 
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
+// REIMPLEMENT THIS TO USE BLOCKING CALLS (synchronization object like lock/condition variable)
+
 void
 timer_sleep (int64_t ticks) 
 {
   int64_t start = timer_ticks ();
 
   ASSERT (intr_get_level () == INTR_ON);
+  //while loop needs to be replaced entirely with a single running function so it does not hog cpu cycles
   while (timer_elapsed (start) < ticks) 
     thread_yield ();
+  /* psuedocode (creating condition variable function that just waits)
+  timerWaitTillFinished(ticks); 
+  */
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
