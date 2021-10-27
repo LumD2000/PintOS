@@ -7,9 +7,6 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
-/* Why do these include statements not work? */
-#include <pthread.h>
-#include <unistd.h>
  
 /* See [8254] for hardware details of the 8254 timer chip. */
 
@@ -21,10 +18,9 @@
 #endif
 
 // Condition Variable
-pthread_cond_t cond1 = PTHREAD_COND_INITIALIZER;
-
+struct condition time_elapsed;
 // Synchronization Lock
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+struct lock lock;
 /* Number of timer ticks since OS booted. */
 static int64_t ticks;
 
@@ -100,7 +96,6 @@ void
 timer_sleep (int64_t ticks) 
 {
   int64_t start = timer_ticks ();
-
   ASSERT (intr_get_level () == INTR_ON);
   while (timer_elapsed (start) < ticks) 
     thread_yield ();
