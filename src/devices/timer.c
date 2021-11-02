@@ -18,7 +18,7 @@
 #endif
 
 // Condition Variable
-struct condition time_elapsed;
+struct condition timer_done;
 // Synchronization Lock
 struct lock lock;
 /* Number of timer ticks since OS booted. */
@@ -100,10 +100,14 @@ timer_sleep (int64_t ticks)
   while (timer_elapsed (start) < ticks) 
     thread_yield ();
   /* psuedocode (creating condition variable function that just waits)
-  while(!timerFinished) {
-    timerWaitTillFinished(ticks); 
+  lock_acquire (&lock);
+  while(timer_elapsed (start) < ticks) {
+    cond_wait (&timer_done, &lock);   //waits for timer to finish
   }
+  cond_signal (&timer_done, &lock);    //timer should be finished
+  lock_release (&lock);
   */
+  //  should also write code that looks for timer to finish
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
