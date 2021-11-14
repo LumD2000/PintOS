@@ -41,6 +41,9 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+  //initialize lock and condition variables for timer_sleep
+  cond_init(&timer_done);
+  lock_init(&lock);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -97,17 +100,27 @@ timer_sleep (int64_t ticks)
 {
   int64_t start = timer_ticks ();
   ASSERT (intr_get_level () == INTR_ON);
+/*
   while (timer_elapsed (start) < ticks) 
     thread_yield ();
-  /* psuedocode (creating condition variable function that just waits)
+*/
+
+  // code to replace context switching with thread_yield()
   lock_acquire (&lock);
-  while(timer_elapsed (start) < ticks) {
+  printf("acquired lock\n");
+  while (timer_elapsed (start) < ticks) {
+   // printf("enters loop\n");
+    barrier();
+    if(lock_held_by_current_thread(&lock)) {
+     // printf("works like normal\n"); 
+    }
     cond_wait (&timer_done, &lock);   //waits for timer to finish
+    printf("goes thru loop\n");
   }
   cond_signal (&timer_done, &lock);    //timer should be finished
   lock_release (&lock);
-  */
-  //  should also write code that looks for timer to finish
+  printf("lock is released\n"); 
+  //  should figure out how timer is shared across threads
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be

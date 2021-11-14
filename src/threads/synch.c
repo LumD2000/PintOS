@@ -66,10 +66,13 @@ sema_down (struct semaphore *sema)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
+  
   while (sema->value == 0) 
     {
+     // printf("SEMA_DOWN: enters loop\n");
       list_push_back (&sema->waiters, &thread_current ()->elem);
       thread_block ();
+      printf("SEMA_DOWN: finishes loop\n");
     }
   sema->value--;
   intr_set_level (old_level);
@@ -293,12 +296,17 @@ cond_wait (struct condition *cond, struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (!intr_context ());
   ASSERT (lock_held_by_current_thread (lock));
-  
+  printf("COND_WAIT: Finished asserts\n");
   sema_init (&waiter.semaphore, 0);
+  printf("COND_WAIT: initialized semaphore\n");
   list_push_back (&cond->waiters, &waiter.elem);
+  printf("COND_WAIT: list_push_back completed\n");
   lock_release (lock);
+  printf("COND_WAIT: released lock\n");
   sema_down (&waiter.semaphore);
+  printf("COND_WAIT: sema_down completed\n");
   lock_acquire (lock);
+  printf("finishes COND_WAIT");
 }
 
 /* If any threads are waiting on COND (protected by LOCK), then
