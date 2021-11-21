@@ -33,7 +33,8 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
-
+// created new function to check each threads sleep timer and wake it if it is time
+static void wake_threads (struct thread *t, void *aux);
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
 void
@@ -98,29 +99,22 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
+//  int64_t start = timer_ticks ();
   ASSERT (intr_get_level () == INTR_ON);
 /*
-  while (timer_elapsed (start) < ticks) 
+  while (timer_elapsed (start) < ticks) { 
     thread_yield ();
-*/
-
-  // code to replace context switching with thread_yield()
-  lock_acquire (&lock);
-  printf("acquired lock\n");
-  while (timer_elapsed (start) < ticks) {
-   // printf("enters loop\n");
-    barrier();
-    if(lock_held_by_current_thread(&lock)) {
-     // printf("works like normal\n"); 
-    }
-    cond_wait (&timer_done, &lock);   //waits for timer to finish
-    printf("goes thru loop\n");
+   // printf("goes thru loop\n");
   }
-  cond_signal (&timer_done, &lock);    //timer should be finished
-  lock_release (&lock);
-  printf("lock is released\n"); 
-  //  should figure out how timer is shared across threads
+*/
+  //copies # of ticks to sleep for into the thread data
+  thread_current()->sleep_ticks = ticks;
+// disable interrupts to serialize 
+  enum intr_level old_level = intr_disable();
+  //block the thread
+  thread_block();
+  //reenable interrupts after blocking for x amount of ticks
+  intr_set_level(old_level);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -199,6 +193,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+  thread_foreach(wake_threads, 0);
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
@@ -270,4 +265,18 @@ real_time_delay (int64_t num, int32_t denom)
      the possibility of overflow. */
   ASSERT (denom % 1000 == 0);
   busy_wait (loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000)); 
+}
+
+//checks whether the thread is able to wake based on how much time has passed since the thread was blocked
+static void
+wake_threads(struct thread *t, void *aux) {
+  if(t->status == THREAD_BLOCKED) {
+    //printf("checking if still sleeping\n");
+    if (t->sleep_ticks > 0) {
+      t->sleep_ticks--;
+      if(t->sleep_ticks == 0) {
+        thread_unblock(t);  
+      }
+    }
+  }
 }

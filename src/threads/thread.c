@@ -223,6 +223,7 @@ thread_create (const char *name, int priority,
 void
 thread_block (void) 
 {
+ // printf("<thread is getting blocked>\n");
   ASSERT (!intr_context ());
   ASSERT (intr_get_level () == INTR_OFF);
 
@@ -556,7 +557,8 @@ thread_schedule_tail (struct thread *prev)
    has completed. */
 static void
 schedule (void) 
-{
+{ 
+ // printf("<trying to schedule next thread>\n");
   struct thread *cur = running_thread ();
   struct thread *next = next_thread_to_run ();
   struct thread *prev = NULL;
