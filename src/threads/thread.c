@@ -347,6 +347,7 @@ void
 thread_set_priority (int new_priority) 
 {
   thread_current ()->priority = new_priority;
+  // check each thread in the running queue, if there a thread with higher priority, yield.
 }
 
 /* Returns the current thread's priority. */
@@ -498,8 +499,21 @@ next_thread_to_run (void)
 {
   if (list_empty (&ready_list))
     return idle_thread;
-  else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  else {
+   // return list_entry (list_pop_front (&ready_list), struct thread, elem);
+    // want to return the thread in the queue with highest priority
+    // find some queue function that checks the queue 
+    struct list_elem * e;
+   // current thread is not running, causing assertion fail
+    struct thread *c = running_thread();
+    for (e = list_begin(&ready_list); e != list_end (&ready_list); e = list_next(e)) {
+      struct thread *t = list_entry (e, struct thread, allelem);
+      if (c->priority < t->priority) {
+        c = t;
+      }
+    }
+    return c;
+  }
 }
 
 /* Completes a thread switch by activating the new thread's page
