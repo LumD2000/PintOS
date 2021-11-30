@@ -512,7 +512,7 @@ next_thread_to_run (void)
         c = t;
       }
     }
-    return c;
+    return list_entry (list_pop_back (&ready_list), struct thread, elem);
   }
 }
 
